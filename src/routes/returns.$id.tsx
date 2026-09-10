@@ -375,10 +375,12 @@ function DecisionScreen() {
                 )}
                 <div className="flex gap-2">
                   <Button variant="outline" onClick={() => setOverrideOpen(true)}>
-                    Override
+                    {isOverridden ? "Change override" : "Override"}
                   </Button>
-                  <Button onClick={accept} disabled={Boolean(saved) && !saved?.overridden}>
-                    Accept decision
+                  <Button onClick={accept} disabled={saved?.route === winner.key}>
+                    {saved?.route === winner.key
+                      ? `${winner.label} finalized`
+                      : `Accept ${winner.label}`}
                   </Button>
                 </div>
               </div>
