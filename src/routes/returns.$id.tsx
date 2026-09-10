@@ -411,17 +411,19 @@ function DecisionScreen() {
               <ul className="divide-y divide-border">
                 {ranked.map((route) => {
                   const isWinner = route.key === evaluation.recommended;
+                  const isFinal = route.key === winner?.key;
+                  const lead = (recommendedRoute?.netRecovery ?? 0) - route.netRecovery;
                   return (
                     <li
                       key={route.key}
                       className={cn(
                         "px-4 py-4 transition-colors sm:px-5",
-                        isWinner && "bg-success-soft/50",
+                        isFinal && "bg-success-soft/50",
                         !route.feasible && "opacity-70",
                       )}
                     >
                       <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-                        {isWinner && <span className="h-8 w-1 rounded-full bg-success" />}
+                        {isFinal && <span className="h-8 w-1 rounded-full bg-success" />}
                         <span className="text-[15px] font-semibold uppercase tracking-wide">
                           {route.label}
                         </span>
@@ -432,42 +434,43 @@ function DecisionScreen() {
                         ) : (
                           <Tag tone="danger">Not feasible</Tag>
                         )}
-                        {isWinner && <Tag tone="ink">Selected</Tag>}
-                        {route.key === "WRITE_OFF" && !isWinner && <Tag>Fallback</Tag>}
+                        {isWinner && <Tag tone="ink">Engine pick</Tag>}
+                        {isFinal && isOverridden && <Tag tone="warning">Final — override</Tag>}
+                        {route.key === "WRITE_OFF" && !isFinal && <Tag>Fallback</Tag>}
                         <span className="num ml-auto text-base font-semibold">
-                          {route.feasible ? formatINR(route.netRecovery) : "—"}
+                          {formatINR(route.netRecovery)}
                         </span>
                       </div>
 
+                      <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                        <Field label="Expected value" value={<span className="num">{formatINR(route.expectedValue)}</span>} />
+                        <Field label="Total cost" value={<span className="num">{formatINR(route.totalCost)}</span>} />
+                        <Field
+                          label="Net recovery"
+                          value={<span className="num">{formatINR(route.netRecovery)}</span>}
+                        />
+                        <Field
+                          label="Cost breakdown"
+                          value={
+                            <span className="num text-xs">
+                              P {route.costs.processing} · R {route.costs.refurbishment} · L{" "}
+                              {route.costs.logistics} · Risk {route.costs.risk}
+                            </span>
+                          }
+                        />
+                      </div>
+
                       {route.feasible ? (
-                        <>
-                          <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
-                            <Field label="Expected value" value={<span className="num">{formatINR(route.expectedValue)}</span>} />
-                            <Field label="Total cost" value={<span className="num">{formatINR(route.totalCost)}</span>} />
-                            <Field
-                              label="Net recovery"
-                              value={<span className="num">{formatINR(route.netRecovery)}</span>}
-                            />
-                            <Field
-                              label="Cost breakdown"
-                              value={
-                                <span className="num text-xs">
-                                  P {route.costs.processing} · R {route.costs.refurbishment} · L{" "}
-                                  {route.costs.logistics} · Risk {route.costs.risk}
-                                </span>
-                              }
-                            />
-                          </div>
-                          <p className="mt-2 text-xs text-muted-foreground">
-                            {isWinner ? "Won: " : "Lost: "}
-                            {isWinner
-                              ? route.drivers.join(", ")
-                              : `${formatINR((winner?.netRecovery ?? 0) - route.netRecovery)} behind ${winner?.label} — ${route.drivers.join(", ")}`}
-                          </p>
-                        </>
+                        <p className="mt-2 text-xs text-muted-foreground">
+                          {isWinner ? "Won: " : "Lost: "}
+                          {isWinner
+                            ? route.drivers.join(", ")
+                            : `${formatINR(lead)} behind ${recommendedRoute?.label} — ${route.drivers.join(", ")}`}
+                        </p>
                       ) : (
                         <p className="mt-2 text-xs text-muted-foreground">
-                          Blocked at feasibility gate: {route.blockedReason}
+                          Lost at the feasibility gate: {route.blockedReason} Economics above are
+                          indicative only — this route cannot be executed.
                         </p>
                       )}
                     </li>
