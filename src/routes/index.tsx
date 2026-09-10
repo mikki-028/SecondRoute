@@ -188,7 +188,81 @@ function QueuePage() {
             </tbody>
           </table>
         </div>
+        )}
       </Panel>
+
+      {finalizedRows.length > 0 && (
+        <Panel
+          className="mt-6"
+          title="Accepted / finalized"
+          action={
+            <span className="text-xs text-muted-foreground">
+              {formatINR(recovered)} committed recovery
+            </span>
+          }
+          dense
+        >
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[900px] border-collapse text-sm">
+              <thead>
+                <tr className="border-b border-border bg-surface/60 text-left">
+                  {[
+                    "Return ID",
+                    "Product",
+                    "Location",
+                    "Recommended",
+                    "Final decision",
+                    "Net recovery",
+                    "Decided",
+                    "",
+                  ].map((h) => (
+                    <th key={h} className="label-xs px-4 py-2.5 font-medium">
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {finalizedRows.map(({ item, decision }) => (
+                  <tr
+                    key={item.returnId}
+                    onClick={() => navigate({ to: "/returns/$id", params: { id: item.returnId } })}
+                    className="group cursor-pointer border-b border-border last:border-0 transition-colors hover:bg-surface/70"
+                  >
+                    <td className="num px-4 py-3 text-[13px] font-medium">{item.returnId}</td>
+                    <td className="px-4 py-3 font-medium">{item.product}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{item.location}</td>
+                    <td className="px-4 py-3">
+                      <RouteTag route={decision!.originalRecommendation} />
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <RouteTag route={decision!.finalDecision} />
+                        {decision!.overridden && <Tag tone="warning">Override</Tag>}
+                      </div>
+                    </td>
+                    <td className="num px-4 py-3 text-[13px]">
+                      {formatINR(decision!.expectedNetRecovery)}
+                    </td>
+                    <td className="num px-4 py-3 text-[13px] text-muted-foreground">
+                      {new Date(decision!.timestamp).toLocaleString("en-IN")}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <Link
+                        to="/returns/$id"
+                        params={{ id: item.returnId }}
+                        className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-muted-foreground opacity-0 transition-opacity hover:bg-muted hover:text-foreground group-hover:opacity-100 focus:opacity-100"
+                      >
+                        Open <ArrowUpRight className="h-3.5 w-3.5" />
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Panel>
+      )}
     </main>
   );
 }
