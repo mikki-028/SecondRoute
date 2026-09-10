@@ -36,7 +36,7 @@ import { cn } from "@/lib/utils";
 import { LOCATIONS, PRESETS, getReturn } from "@/lib/secondroute/data";
 import { evaluateReturn, formatINR } from "@/lib/secondroute/engine";
 import { applySettings, loadSettings } from "@/lib/secondroute/settings";
-import { saveDecision } from "@/lib/secondroute/store";
+import { latestDecisionFor, saveDecision } from "@/lib/secondroute/store";
 import {
   CONDITION_LABELS,
   DEMAND_LABELS,
