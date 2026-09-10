@@ -312,13 +312,23 @@ function DecisionScreen() {
             <section className="overflow-hidden rounded-lg border border-border bg-card shadow-hero">
               <div className="flex flex-col gap-6 p-5 sm:flex-row sm:items-end sm:justify-between sm:p-7">
                 <div>
-                  <div className="label-xs">Recommended destination</div>
+                  <div className="label-xs">
+                    {isOverridden ? "Current decision — human override" : "Recommended destination"}
+                  </div>
                   <div className="mt-2 flex flex-wrap items-baseline gap-3">
                     <h2 className="text-4xl font-bold uppercase tracking-tight sm:text-5xl">
                       {winner.label}
                     </h2>
                     {winner.key === "WRITE_OFF" && <Tag tone="danger">Fallback</Tag>}
+                    {isOverridden && <Tag tone="warning">Overridden</Tag>}
                   </div>
+                  {isOverridden && recommendedRoute && (
+                    <p className="mt-2 text-xs text-muted-foreground">
+                      Engine recommended {recommendedRoute.label} (
+                      {formatINR(recommendedRoute.netRecovery)}). Override reason:{" "}
+                      {pendingOverride!.reason}
+                    </p>
+                  )}
                   <p className="num mt-3 text-xl font-semibold text-success">
                     {formatINR(winner.netRecovery)}
                     <span className="ml-2 font-sans text-sm font-normal text-muted-foreground">
