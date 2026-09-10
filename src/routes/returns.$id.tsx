@@ -109,8 +109,13 @@ function DecisionScreen() {
     baseRef.current = withSettings;
     setCtx(withSettings);
     setNotice(null);
-    setSaved(null);
-    setPendingOverride(null);
+    // Restore an already-finalized decision so a finalized return opens in its
+    // final state instead of looking undecided.
+    const existing = latestDecisionFor(seed.returnId);
+    setSaved(existing ? { route: existing.finalDecision, overridden: existing.overridden } : null);
+    setPendingOverride(
+      existing?.overridden ? { route: existing.finalDecision, reason: existing.reason } : null,
+    );
   }, [seed]);
 
   const evaluation = useMemo(() => (ctx ? evaluateReturn(ctx) : null), [ctx]);
