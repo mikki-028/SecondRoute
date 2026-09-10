@@ -1,755 +1,572 @@
-# Second Route Decisions
+# SecondRoute ♻️
 
-Build a polished, competition-ready web prototype called SecondRoute.
+### Context-Aware Returns Disposition Decision Engine
 
-SecondRoute is a context-aware returns disposition decision engine for fashion retailers.
+> **Returns don't have one destination. Their best next route depends on context.**
 
-CORE PRODUCT IDEA
+SecondRoute is a decision-support prototype designed for fashion retailers to determine the **best executable destination for returned products**.
 
-When a returned garment enters the system, SecondRoute evaluates the item's current context and determines the best executable destination:
+Instead of treating every return the same way, SecondRoute evaluates the item's condition, demand, season, inventory, location, operational costs, and available recovery channels to determine whether the item should be:
 
-Resell
+**Resold · Refurbished · Exchanged · Donated · Recycled · Written-off**
 
-Refurbish
+The system combines **feasibility checks + economic evaluation + explainable ranking** to produce an actionable recommendation.
 
-Exchange
+---
 
-Donate
+## 🎯 Problem
 
-Recycle
+Returned fashion products often enter a fragmented recovery process.
 
-Write-off
+A returned garment may be:
 
-The core principle is:
+* Resalable
+* Repairable
+* Suitable for exchange
+* Suitable for donation
+* Recyclable
+* Or economically unrecoverable
 
-The same returned item can receive a different recommendation when its context changes.
+The challenge is not simply identifying what *can* be done with a return.
 
-The prototype must demonstrate:
+The challenge is determining:
 
-Item → Feasibility → Economic evaluation → Ranking → Recommendation → Explanation → Human override → Decision log
+> **What should be done with it right now, given its current context?**
 
-This is NOT an ML demo. The prototype should use a deterministic rules + economics decision engine. External systems such as inventory, demand and channel availability should be simulated with realistic mock data.
+A route that makes sense for one item may become unprofitable or infeasible when demand, condition, inventory, season, logistics, or channel availability changes.
 
-TECH STACK
+---
 
-Use:
+## 💡 Solution
 
-React
+SecondRoute acts as a **decision layer** between returned inventory and possible recovery destinations.
 
-Vite
+### Core flow
 
-TypeScript
+```text
+Upload Return
+      ↓
+Enter / Select Item Context
+      ↓
+Feasibility Checks
+      ↓
+Value & Cost Calculation
+      ↓
+Expected Net Recovery
+      ↓
+Rank Feasible Destinations
+      ↓
+Recommended Route
+      ↓
+Explanation + Decision Trace
+      ↓
+Accept / Override
+      ↓
+Decision Log
+```
 
-Tailwind CSS
+The same returned item can therefore receive a different recommendation when its context changes.
 
-shadcn/ui
+---
 
-FastAPI backend if supported by the environment
+# 🚀 Key Features
 
-SQLite for persistence
+## 1. 📸 Return Item Upload
 
-If a backend cannot be deployed through Lovable, create a clean frontend service layer with mock persistence, but structure it so the backend can be connected later.
+Users can upload a photo of the returned clothing item.
 
-Do NOT use unnecessary third-party APIs.
+The image becomes part of the return record and is displayed throughout the evaluation process.
 
-VISUAL DIRECTION
+> **Important:** The current prototype does not use computer vision to automatically determine garment condition. Condition and operational inputs are supplied through structured inputs.
 
-The interface should feel like a real enterprise retail operations product, not an AI-generated dashboard.
+---
 
-Design language:
+## 2. 📝 Context-Based Inputs
 
-Premium
+The user can provide or modify key decision variables such as:
 
-Minimal
+* Product category
+* Condition
+* Location
+* Season
+* Demand
+* Inventory
+* Processing cost
+* Refurbishment cost
+* Logistics cost
+* Channel availability
 
-Modern
+These inputs form the context used by the decision engine.
 
-Data-driven
+---
 
-Clean typography
+## 3. ⚙️ Decision Engine
 
-Strong hierarchy
+SecondRoute uses a deterministic **rules + economics** approach.
 
-Lots of whitespace
+Every possible destination first passes through a feasibility check.
 
-Subtle borders
+Only executable destinations are then economically evaluated.
 
-Restrained use of color
+### Possible destinations
 
-Professional retail-tech aesthetic
+| Destination   | Purpose                                                 |
+| ------------- | ------------------------------------------------------- |
+| **Resell**    | Return the item to saleable inventory                   |
+| **Refurbish** | Repair or restore the item before recovery              |
+| **Exchange**  | Use the item within an exchange workflow                |
+| **Donate**    | Route the item through an available donation channel    |
+| **Recycle**   | Recover material through an available recycling channel |
+| **Write-off** | Use as the fallback when recovery is not viable         |
 
-Avoid:
+---
 
-Excessive gradients
+# 💰 Economic Evaluation
 
-Neon colors
+For each feasible route, SecondRoute estimates:
 
-Huge hero illustrations
+### Expected Net Recovery
 
-Chatbot UI
-
-Generic AI imagery
-
-Excessive animations
-
-Dashboard clutter
-
-Fake 3D graphics
-
-Use subtle micro-interactions and smooth transitions only where they improve usability.
-
-Desktop-first and responsive.
-
-APPLICATION STRUCTURE
-
-Create these main screens:
-
-1. Returns Queue
-
-2. Return Detail / Decision Screen
-
-3. Decision History
-
-4. Simple Settings / Scenario Controls
-
-The Return Detail / Decision Screen is the hero screen and should receive the most visual attention.
-
-1. RETURNS QUEUE
-
-Create a clean table containing approximately 15–20 synthetic returned fashion items.
-
-Columns:
-
-Return ID
-
-Product
-
-Category
-
-Condition
-
-Location
-
-Return Date
-
-Current Status
-
-Recommendation
-
-Example records:
-
-RT-20481 — Urban Utility Jacket
-
-RT-20482 — Classic Straight Jeans
-
-RT-20483 — Everyday Cotton Tee
-
-RT-20484 — Performance Activewear
-
-RT-20485 — Linen Kurta
-
-Include enough additional records to make the system feel realistic.
-
-Clicking a row opens the Return Detail / Decision screen.
-
-Keep the queue intentionally simple.
-
-Do NOT build advanced analytics, complicated filtering systems or giant dashboards.
-
-2. RETURN DETAIL / DECISION SCREEN
-
-This is the most important screen.
-
-For the selected return, show:
-
-ITEM HEADER
-
-Example:
-
-RT-20481
-
-Urban Utility Jacket
-
-Category: Outerwear
-
-Location: Delhi Fulfilment Centre
-
-Return reason: Size issue
-
-ITEM CONTEXT
-
-Show the variables used by the decision engine:
-
-Condition
-
-Category
-
-Location
-
-Season
-
-Demand
-
-Inventory
-
-Processing Cost
-
-Refurbishment Cost
-
-Logistics Cost
-
-Channel Availability
-
-Make these values visually clear.
-
-DECISION ENGINE
-
-Implement a deterministic decision engine.
-
-Every destination must first pass a feasibility gate.
-
-Possible destinations:
-
-RESELL
-
-Eligible when item condition and operational requirements allow resale.
-
-REFURBISH
-
-Eligible when condition is repairable and refurbishment is economically/operationally viable.
-
-EXCHANGE
-
-Eligible when replacement inventory/channel is available.
-
-DONATE
-
-Eligible only when a configured donation channel exists.
-
-RECYCLE
-
-Eligible when an appropriate recycling channel exists and the item can be processed.
-
-WRITE-OFF
-
-Always available as the fallback destination.
-
-IMPORTANT:
-
-Feasibility and economic scoring are separate concepts.
-
-A destination that is not executable must NOT win simply because its theoretical recovery value is high.
-
-ECONOMIC MODEL
-
-Use deterministic formulas.
-
-For each feasible route calculate:
-
-Expected Realizable Value
-
-then:
-
-Expected Net Recovery =
+```text
+Expected Net Recovery
+=
 Expected Realizable Value
 − Processing Cost
 − Refurbishment Cost
 − Logistics Cost
 − Time / Markdown Risk
 − Other Costs
+```
 
-Use route-specific factors rather than making every variable affect every route equally.
+The destination with the strongest executable economic outcome becomes the recommended route.
 
-Example conceptual dependencies:
+The prototype uses **synthetic/simulated data** for demonstration.
 
-| Variable | Resell | Refurbish | Exchange | Donate | Recycle |
-| Condition | Yes | Yes | Yes | Partial | Yes |
-| Demand | Yes | Yes | Yes | No | No |
-| Season | Yes | Yes | Partial | No | No |
-| Inventory | Yes | Yes | Yes | No | No |
-| Location | Yes | Partial | Partial | Yes | Yes |
-| Logistics | Yes | Yes | Yes | Yes | Yes |
+It does not claim that the displayed values are real retailer predictions.
 
-The exact values should be deterministic and believable.
+---
 
-Do NOT pretend these numbers come from real ML predictions.
+# 🧠 Feasibility ≠ Scoring
 
-Clearly label simulated data where appropriate.
+One of the core principles of SecondRoute is that a theoretically attractive destination should not be recommended if it cannot actually be executed.
 
-DECISION RANKING
+For example:
 
-After feasibility filtering:
+```text
+Recycle
+Expected Recovery: ₹1,200
 
-Calculate expected net recovery for every feasible destination.
+BUT
 
-Rank destinations by expected net recovery.
+No verified recycling channel available
+        ↓
+NOT FEASIBLE
+        ↓
+Cannot be recommended
+```
 
-Select the highest-ranked executable destination.
+This prevents the system from choosing a route merely because its theoretical recovery value is high.
 
-Use deterministic tie-breaking rules.
+---
 
-Write a short explanation for why the winning route was selected.
+# 📊 Explainable Decision Trace
 
-The engine must NOT simply select a route based on hardcoded item names.
-
-The result must actually change when scenario variables change.
-
-HERO RECOMMENDATION CARD
-
-Make the recommendation extremely prominent.
+Every evaluation provides a comparison between possible destinations.
 
 Example:
 
-RECOMMENDED DESTINATION
-
+```text
 RESELL
-
-₹2,980 expected net recovery
-
-Then show:
-
-Decision confidence: HIGH
-
-Do NOT present this as ML probability.
-
-Under confidence, show:
-
-Strong data coverage + ₹570 lead over next-best executable route
-
-Confidence should be derived from:
-
-Data completeness
-
-Decision margin between first and second route
-
-Use HIGH / MEDIUM / LOW.
-
-DECISION TRACE
-
-Below the recommendation, create a visually strong comparison of all six destinations.
-
-For every route show:
-
-Destination
-
-Feasibility
-
-Expected value
-
-Total cost
-
-Expected net recovery
-
-Status
-
-Example:
-
-RESELL — ₹2,980
 ✓ Feasible
-Good condition + high demand + low logistics
+Expected Net Recovery: ₹2,980
 
-REFURBISH — ₹2,410
+REFURBISH
 ✓ Feasible
-Repair cost reduces recovery
+Expected Net Recovery: ₹2,410
 
-EXCHANGE — ₹2,180
+EXCHANGE
 ✓ Feasible
-Replacement stock available
+Expected Net Recovery: ₹2,180
 
-RECYCLE — ₹640
+RECYCLE
 ✓ Feasible
-Lower economic outcome
+Expected Net Recovery: ₹640
 
 DONATE
-— Not feasible
+✕ Not feasible
 No configured donation channel
 
-WRITE-OFF — ₹0
+WRITE-OFF
 Fallback
+₹0
+```
 
-Clearly indicate:
+The interface highlights:
 
-WHY IT WON
+### WHY IT WON
 
 and
 
-WHY OTHERS LOST
+### WHY OTHERS LOST
 
-The winning destination should be visually distinguished.
+This makes the recommendation explainable rather than presenting a black-box result.
 
-SCENARIO CONTROL PANEL
+---
 
-Create a compact panel allowing the user to change decision inputs live.
+# 🔄 Dynamic Scenario Evaluation
 
-Controls:
+SecondRoute is designed to demonstrate that decisions are **context-dependent**.
 
-Condition
+For example:
 
-Season
+```text
+GOOD CONDITION
++ HIGH DEMAND
++ IN-SEASON
+        ↓
+      RESELL
+```
 
-Location
+Change the context:
 
-Demand
+```text
+REPAIRABLE CONDITION
++ MODERATE DEMAND
++ VIABLE REFURBISHMENT COST
+        ↓
+    REFURBISH
+```
 
-Inventory
+Change it again:
 
-Processing Cost
+```text
+SEVERE DAMAGE
++ VERIFIED RECYCLING CHANNEL
+        ↓
+      RECYCLE
+```
 
-Refurbishment Cost
+Disable the recycling channel:
 
-Logistics Cost
+```text
+NO EXECUTABLE RECOVERY CHANNEL
+        ↓
+    WRITE-OFF
+```
 
-Channel Availability
+When the winning destination changes, the prototype displays a:
 
-When a value changes:
+### **DECISION UPDATED**
 
-DO NOT simply change displayed text.
+indicator showing the previous and new recommendation.
 
-Actually recalculate the decision engine.
+---
 
-Flow:
+# 👤 Human Override
 
-Context changed
-→ Recalculate feasibility
-→ Recalculate values/costs
-→ Re-rank destinations
-→ Update recommendation
-→ Update decision trace
+SecondRoute is a **decision-support system**, not an autonomous replacement for human operators.
 
-DECISION CHANGED ANIMATION
+Users can:
 
-This is a critical demo feature.
+* Accept the recommendation
+* Override the recommendation
+* Select another feasible destination
+* Provide an override reason
+* Save the final decision
 
-If the recommendation changes after a scenario modification, show a small but highly visible notification:
+The system records:
 
-DECISION UPDATED
+* Original recommendation
+* Final decision
+* Override status
+* Reason
+* Timestamp
+* Input snapshot
 
-Resell → Refurbish
+This creates an auditable decision trail.
 
-Reason:
+---
 
-Condition changed from Good → Repairable
+# 📋 Returns Queue
 
-Also show the previous and new expected recovery values.
+The prototype includes a lightweight returns queue containing synthetic return records.
 
-Keep the animation subtle and professional.
+Example:
 
-The goal is to visually demonstrate:
+| Return ID | Product                | Category    | Condition  | Location  |
+| --------- | ---------------------- | ----------- | ---------- | --------- |
+| RT-20481  | Urban Utility Jacket   | Outerwear   | Good       | Delhi     |
+| RT-20482  | Classic Straight Jeans | Bottomwear  | Repairable | Delhi     |
+| RT-20483  | Everyday Cotton Tee    | T-shirt     | Good       | Mumbai    |
+| RT-20484  | Performance Activewear | Activewear  | Damaged    | Bengaluru |
+| RT-20485  | Linen Kurta            | Ethnic Wear | Good       | Delhi     |
 
-Same item → changed context → recalculated economics → different decision
+Selecting a return opens its decision screen.
 
-THREE GUARANTEED DEMO SCENARIOS
+---
 
-Preconfigure the main demo item:
+# 🧪 Prototype Data
 
-RT-20481 — Urban Utility Jacket
+The prototype uses synthetic data to simulate upstream retailer systems.
 
-Scenario 1:
+Examples:
 
+* Inventory data
+* Demand signals
+* Product condition
+* Logistics costs
+* Recovery costs
+* Channel availability
+
+These are intentionally simulated because the prototype's goal is to demonstrate the **decision layer**, not production integrations.
+
+### Prototype principle
+
+> **The upstream systems are mocked; the decision mechanism is real.**
+
+---
+
+# 🏗️ Architecture
+
+```text
+                    SECONDROUTE
+                         │
+                  RETURNS QUEUE
+                         │
+                  Select Return
+                         │
+                         ▼
+              ┌─────────────────────┐
+              │   DECISION ENGINE   │
+              │                     │
+              │ Scope Validation    │
+              │        ↓            │
+              │ Feasibility Gates   │
+              │        ↓            │
+              │ Value Estimation    │
+              │        ↓            │
+              │ Cost Calculation    │
+              │        ↓            │
+              │ Expected Recovery   │
+              │        ↓            │
+              │ Ranking + Tie-break │
+              └──────────┬──────────┘
+                         │
+                         ▼
+                   RECOMMENDATION
+                         │
+                ┌────────┴────────┐
+                │                 │
+             ACCEPT            OVERRIDE
+                │                 │
+                └────────┬────────┘
+                         ▼
+                    DECISION LOG
+```
+
+---
+
+# 🛠️ Tech Stack
+
+### Frontend
+
+* React
+* Vite
+* TypeScript
+* Tailwind CSS
+* shadcn/ui
+
+### Backend
+
+* FastAPI
+* SQLite
+
+### Data
+
+* Synthetic prototype dataset
+* Structured return records
+* Persisted evaluation and decision history
+
+---
+
+# 🔌 API Structure
+
+The prototype is designed around a simple API layer.
+
+```text
+GET  /items
+GET  /items/{id}
+
+POST /evaluate
+POST /override
+
+GET  /decisions
+```
+
+The decision logic is centralized in a single evaluation service rather than duplicated across frontend components.
+
+Conceptually:
+
+```text
+evaluateReturn(itemContext)
+
+→ Validate inputs
+→ Apply feasibility gates
+→ Estimate realizable value
+→ Calculate costs
+→ Calculate net recovery
+→ Rank destinations
+→ Calculate decision confidence
+→ Generate explanation
+→ Return recommendation
+```
+
+---
+
+# 📈 Decision Confidence
+
+SecondRoute's confidence indicator is **not an ML probability**.
+
+It is based on factors such as:
+
+* Completeness of decision inputs
+* Margin between the highest-ranked and second-ranked feasible destination
+
+Example:
+
+```text
+DECISION CONFIDENCE
+HIGH
+
+Strong data coverage
++
+₹570 lead over next-best route
+```
+
+This makes the confidence indicator transparent and interpretable.
+
+---
+
+# 🎬 Demonstration Scenario
+
+The primary demonstration item is:
+
+### RT-20481 — Urban Utility Jacket
+
+#### Scenario 1
+
+```text
 Condition: Good
 Season: In-season
 Demand: High
 Inventory: Normal
 
-Expected recommendation:
+→ RESELL
+```
 
-RESELL
+#### Scenario 2
 
-Scenario 2:
-
+```text
 Condition: Repairable
 Demand: Moderate
 Refurbishment Cost: Reasonable
 
-Expected recommendation:
-
-REFURBISH
-
-Scenario 3:
-
-Condition: Severely damaged
-Verified recycling channel: Available
-
-Expected recommendation:
-
-RECYCLE
-
-Then demonstrate:
-
-Disable recycling channel.
-
-Expected result:
-
-WRITE-OFF
-
-This demonstrates the principle:
-
-Feasibility ≠ scoring.
-
-The system must never recommend an unavailable route.
-
-Tune the synthetic data so these scenarios reliably produce the intended results.
-
-DATA CONTEXT
-
-Add a small enterprise-style section showing the source/context of inputs.
-
-Example:
-
-DATA CONTEXT
-
-QC status: Verified
-Inventory: Simulated
-Demand: Simulated
-Channel availability: Configured
-
-Add a small label:
-
-Prototype data
-
-Do not pretend that live retailer integrations exist.
-
-HUMAN OVERRIDE
-
-Provide:
-
-ACCEPT DECISION
-
-and
-
-OVERRIDE
-
-If Override is selected:
-
-Show destination options
-
-Allow selecting another feasible destination
-
-Require a short reason
-
-Save the override
-
-Record timestamp
-
-Record original recommendation
-
-Record final decision
-
-Record reason
-
-Make it clear that:
-
-The engine recommends. A human can override.
-
-Do not allow meaningless overrides without a reason.
-
-DECISION HISTORY
-
-Create a simple history page.
-
-Show:
-
-Return ID
-
-Original recommendation
-
-Final decision
-
-Override status
-
-Timestamp
-
-Reason
-
-Clicking a decision should show the input snapshot used when that decision was made.
-
-This is important because decisions should be auditable.
-
-PERSISTENCE
-
-Persist:
-
-Returns
-
-Evaluations
-
-Decision history
-
-Overrides
-
-Input snapshots
-
-Timestamps
-
-Prefer SQLite.
-
-If backend persistence is unavailable, implement a clean local mock persistence layer but keep the data structures backend-ready.
-
-API STRUCTURE
-
-If using FastAPI, create approximately:
-
-GET /items
-
-GET /items/{id}
-
-POST /evaluate
-
-POST /override
-
-GET /decisions
-
-Keep API responses clean and typed.
-
-The frontend should call the decision engine rather than duplicating the scoring logic in multiple components.
-
-IMPORTANT ARCHITECTURE RULE
-
-Create ONE central decision-engine function/service.
-
-Conceptually:
-
-evaluateReturn(itemContext)
-
-→ scope validation
-
-→ feasibility gates
-
-→ value estimation
-
-→ cost calculation
-
-→ net recovery
-
-→ ranking
-
-→ confidence
-
-→ explanation
-
-→ recommendation
-
-Every scenario control must call this same engine.
-
-Do NOT create separate hardcoded logic for each UI scenario.
-
-WHAT NOT TO BUILD
-
-This prototype intentionally does NOT include:
-
-Mobile application
-
-Chatbot
-
-Computer vision
-
-Live marketplace
-
-Nationwide recycler discovery
-
-Live retailer integrations
-
-Authentication system
-
-Complex ML model
-
-Real-time external APIs
-
-RTO/NDR management
-
-Giant analytics dashboard
-
-Complex admin portal
-
-IoT devices
-
-Barcode hardware
-
-Computer vision condition detection
-
-Keep the scope tightly focused on the decision engine.
-
-EMPTY / ERROR STATES
-
-Build polished states for:
-
-Missing data
-
-No feasible recovery route
-
-Invalid cost
-
-Missing channel
-
-Failed evaluation
-
-Override validation
-
-If critical data is missing, explain what is missing instead of silently generating a recommendation.
-
-DEMO EXPERIENCE
-
-The primary user journey should be:
-
-Returns Queue
-→ Select RT-20481
-→ View item context
-→ View recommendation
-→ Open decision trace
-→ Change condition
-→ Engine recalculates
-→ Recommendation changes
-→ Show “DECISION UPDATED”
-→ Accept or Override
-→ Decision saved to history
-
-The entire experience should feel fast and intentional.
-
-FINAL PRODUCT MESSAGE
-
-The UI should communicate this idea without excessive marketing copy:
-
-Returns don't have one destination.
-Their best next route depends on context.
-
-SecondRoute turns that context into an executable, explainable disposition decision.
-
-Build the prototype around this thesis.
-
-Prioritize:
-
-Decision engine correctness > believable data > clear decision trace > demo flow > visual polish
-
-Do not over-engineer features outside this scope. make a polished ui and phone compatible SecondRoute flow =
-
-📸 Upload clothing photo
-→ 📝 Select context/data
-→ ⚙️ Evaluate
-→ 📊 Compare all feasible routes
-→ 🏆 Recommend best destination
-→ 💡 Explain why
-→ 🔄 Change a variable
-→ Decision changes if the economics justify it
-→ 👤 Accept / Override
-→ 🧾 Log decision
-
-This project was built with [Lovable](https://lovable.dev).
-
-## Build with Lovable
-
-Continue developing this project in the [Lovable editor](https://lovable.dev/projects/87d6580d-0d38-455e-9415-c2fb4734adab).
-
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: every change made in Lovable is committed straight to this repository.
-- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
-
-## Development
-
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
-
-```sh
-git clone <this-repository-url>
-cd <repository-name>
-npm i
-npm run dev
+→ REFURBISH
 ```
+
+#### Scenario 3
+
+```text
+Condition: Severely damaged
+Recycling Channel: Available
+
+→ RECYCLE
+```
+
+Then:
+
+```text
+Disable recycling channel
+
+→ WRITE-OFF
+```
+
+This demonstrates the central principle:
+
+> **A destination must be both executable and economically justified.**
+
+---
+
+# 🎯 Design Philosophy
+
+SecondRoute intentionally avoids unnecessary complexity.
+
+The prototype does **not** attempt to build:
+
+* A mobile application
+* A chatbot
+* Computer vision
+* A live marketplace
+* Nationwide recycler discovery
+* Live retailer integrations
+* A complex ML model
+* IoT hardware
+* A massive analytics platform
+* RTO/NDR management
+* A complex authentication system
+
+The focus remains on one problem:
+
+> **Making better, explainable disposition decisions for returned products.**
+
+---
+
+# 🔮 Future Scope
+
+The current prototype establishes the decision layer.
+
+With real retailer data, future versions could incorporate:
+
+* ML-based demand forecasting
+* Automated resale price prediction
+* Computer vision for condition assessment
+* Real inventory integrations
+* Real logistics pricing
+* Recycler/refurbisher network integrations
+* Historical decision learning
+* Route optimization
+* Retailer-specific optimization models
+* Carbon-impact estimation
+* Automated policy recommendations
+
+These are intentionally outside the current prototype scope.
+
+---
+
+# 🌱 Why SecondRoute?
+
+Traditional return handling can treat recovery as a series of disconnected operational decisions.
+
+SecondRoute introduces a unified decision layer that asks:
+
+> **Given this item's current condition, market context, operational constraints and available channels — what is its best next route?**
+
+The goal is to move from:
+
+**Return → Fixed workflow**
+
+to:
+
+**Return → Context → Evaluation → Best executable route**
+
+---
+
+# 📌 Project Status
+
+**Prototype / Proof of Concept**
+
+The current version uses synthetic data and simulated upstream systems to demonstrate the decision engine, explainability, scenario re-evaluation and human override workflow.
+
+---
+
+**Returns move. The decision should move with them.**
