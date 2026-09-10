@@ -105,10 +105,12 @@ function buildRoutes(ctx: ItemContext): RouteEvaluation[] {
       label: ROUTE_LABELS[key],
       feasible,
       blockedReason,
-      expectedValue: feasible ? ev : 0,
+      // Economics are always computed so the trace can show why a blocked route
+      // would have lost anyway; ranking only ever considers feasible routes.
+      expectedValue: ev,
       costs: c,
-      totalCost: feasible ? totalCost : 0,
-      netRecovery: feasible ? ev - totalCost : 0,
+      totalCost,
+      netRecovery: ev - totalCost,
       drivers,
       rank: null,
     };
