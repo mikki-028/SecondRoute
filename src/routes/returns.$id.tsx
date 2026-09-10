@@ -148,7 +148,13 @@ function DecisionScreen() {
         toValue: netOf(after, after.recommended),
         at: Date.now(),
       });
+      // On narrow screens the controls sit below the recommendation — bring the
+      // updated decision back into view.
+      if (typeof window !== "undefined" && window.innerWidth < 1280) {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
     }
+
     setSaved(null);
   };
 
