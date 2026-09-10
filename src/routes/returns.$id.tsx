@@ -350,7 +350,9 @@ function DecisionScreen() {
                 </div>
               </div>
               <div className="border-t border-border bg-surface/40 px-5 py-4 sm:px-7">
-                <div className="label-xs">Why it won</div>
+                <div className="label-xs">
+                  {isOverridden ? "Engine rationale for its own pick" : "Why it won"}
+                </div>
                 <p className="mt-1.5 max-w-3xl text-sm leading-relaxed">{evaluation.explanation}</p>
               </div>
               <div className="flex flex-col gap-3 border-t border-border px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-7">
