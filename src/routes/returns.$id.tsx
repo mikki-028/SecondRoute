@@ -36,7 +36,7 @@ import { cn } from "@/lib/utils";
 import { LOCATIONS, PRESETS, getReturn } from "@/lib/secondroute/data";
 import { evaluateReturn, formatINR } from "@/lib/secondroute/engine";
 import { applySettings, loadSettings } from "@/lib/secondroute/settings";
-import { saveDecision } from "@/lib/secondroute/store";
+import { latestDecisionFor, saveDecision } from "@/lib/secondroute/store";
 import {
   CONDITION_LABELS,
   DEMAND_LABELS,
@@ -98,6 +98,9 @@ function DecisionScreen() {
   const [overrideReason, setOverrideReason] = useState("");
   const [overrideError, setOverrideError] = useState<string | null>(null);
   const [saved, setSaved] = useState<{ route: RouteKey; overridden: boolean } | null>(null);
+  const [pendingOverride, setPendingOverride] = useState<{ route: RouteKey; reason: string } | null>(
+    null,
+  );
   const baseRef = useRef<ItemContext | null>(null);
 
   useEffect(() => {
@@ -106,7 +109,13 @@ function DecisionScreen() {
     baseRef.current = withSettings;
     setCtx(withSettings);
     setNotice(null);
-    setSaved(null);
+    // Restore an already-finalized decision so a finalized return opens in its
+    // final state instead of looking undecided.
+    const existing = latestDecisionFor(seed.returnId);
+    setSaved(existing ? { route: existing.finalDecision, overridden: existing.overridden } : null);
+    setPendingOverride(
+      existing?.overridden ? { route: existing.finalDecision, reason: existing.reason } : null,
+    );
   }, [seed]);
 
   const evaluation = useMemo(() => (ctx ? evaluateReturn(ctx) : null), [ctx]);
@@ -156,30 +165,46 @@ function DecisionScreen() {
     }
 
     setSaved(null);
+    // A recalculated evaluation invalidates any pending override selection.
+    setPendingOverride(null);
   };
 
-  const winner = evaluation.routes.find((r) => r.key === evaluation.recommended) ?? null;
+  const recommendedRoute = evaluation.routes.find((r) => r.key === evaluation.recommended) ?? null;
   const ranked = [...evaluation.routes].sort((a, b) => {
     if (a.feasible !== b.feasible) return a.feasible ? -1 : 1;
     return b.netRecovery - a.netRecovery;
   });
   const feasibleRoutes = evaluation.routes.filter((r) => r.feasible);
 
-  const accept = () => {
-    if (!winner) return;
+  /** Current decision = human override if one is in force, otherwise the engine pick. */
+  const winner = pendingOverride
+    ? (evaluation.routes.find((r) => r.key === pendingOverride.route) ?? recommendedRoute)
+    : recommendedRoute;
+  const isOverridden = Boolean(pendingOverride && winner?.key === pendingOverride.route);
+
+  const finalize = (route: RouteKey, overridden: boolean, reason: string) => {
     saveDecision({
       returnId: ctx.returnId,
       product: ctx.product,
       originalRecommendation: evaluation.recommended,
-      finalDecision: winner.key,
-      overridden: false,
-      reason: evaluation.explanation,
+      finalDecision: route,
+      overridden,
+      reason,
       confidence: evaluation.confidence,
-      expectedNetRecovery: winner.netRecovery,
+      expectedNetRecovery: netOf(evaluation, route),
       snapshot: evaluation.snapshot,
       routes: evaluation.routes,
     });
-    setSaved({ route: winner.key, overridden: false });
+    setSaved({ route, overridden });
+  };
+
+  const accept = () => {
+    if (!winner) return;
+    finalize(
+      winner.key,
+      isOverridden,
+      isOverridden ? pendingOverride!.reason : evaluation.explanation,
+    );
   };
 
   const submitOverride = () => {
@@ -187,19 +212,9 @@ function DecisionScreen() {
     if (overrideReason.trim().length < 10)
       return setOverrideError("Give a reason of at least 10 characters — overrides are audited.");
     setOverrideError(null);
-    saveDecision({
-      returnId: ctx.returnId,
-      product: ctx.product,
-      originalRecommendation: evaluation.recommended,
-      finalDecision: overrideRoute,
-      overridden: true,
-      reason: overrideReason.trim(),
-      confidence: evaluation.confidence,
-      expectedNetRecovery: netOf(evaluation, overrideRoute),
-      snapshot: evaluation.snapshot,
-      routes: evaluation.routes,
-    });
-    setSaved({ route: overrideRoute, overridden: true });
+    const reason = overrideReason.trim();
+    setPendingOverride({ route: overrideRoute, reason });
+    finalize(overrideRoute, true, reason);
     setOverrideOpen(false);
     setOverrideReason("");
     setOverrideRoute("");
@@ -302,13 +317,23 @@ function DecisionScreen() {
             <section className="overflow-hidden rounded-lg border border-border bg-card shadow-hero">
               <div className="flex flex-col gap-6 p-5 sm:flex-row sm:items-end sm:justify-between sm:p-7">
                 <div>
-                  <div className="label-xs">Recommended destination</div>
+                  <div className="label-xs">
+                    {isOverridden ? "Current decision — human override" : "Recommended destination"}
+                  </div>
                   <div className="mt-2 flex flex-wrap items-baseline gap-3">
                     <h2 className="text-4xl font-bold uppercase tracking-tight sm:text-5xl">
                       {winner.label}
                     </h2>
                     {winner.key === "WRITE_OFF" && <Tag tone="danger">Fallback</Tag>}
+                    {isOverridden && <Tag tone="warning">Overridden</Tag>}
                   </div>
+                  {isOverridden && recommendedRoute && (
+                    <p className="mt-2 text-xs text-muted-foreground">
+                      Engine recommended {recommendedRoute.label} (
+                      {formatINR(recommendedRoute.netRecovery)}). Override reason:{" "}
+                      {pendingOverride!.reason}
+                    </p>
+                  )}
                   <p className="num mt-3 text-xl font-semibold text-success">
                     {formatINR(winner.netRecovery)}
                     <span className="ml-2 font-sans text-sm font-normal text-muted-foreground">
@@ -330,7 +355,9 @@ function DecisionScreen() {
                 </div>
               </div>
               <div className="border-t border-border bg-surface/40 px-5 py-4 sm:px-7">
-                <div className="label-xs">Why it won</div>
+                <div className="label-xs">
+                  {isOverridden ? "Engine rationale for its own pick" : "Why it won"}
+                </div>
                 <p className="mt-1.5 max-w-3xl text-sm leading-relaxed">{evaluation.explanation}</p>
               </div>
               <div className="flex flex-col gap-3 border-t border-border px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-7">
@@ -355,10 +382,12 @@ function DecisionScreen() {
                 )}
                 <div className="flex gap-2">
                   <Button variant="outline" onClick={() => setOverrideOpen(true)}>
-                    Override
+                    {isOverridden ? "Change override" : "Override"}
                   </Button>
-                  <Button onClick={accept} disabled={Boolean(saved) && !saved?.overridden}>
-                    Accept decision
+                  <Button onClick={accept} disabled={saved?.route === winner.key}>
+                    {saved?.route === winner.key
+                      ? `${winner.label} finalized`
+                      : `Accept ${winner.label}`}
                   </Button>
                 </div>
               </div>
@@ -387,17 +416,19 @@ function DecisionScreen() {
               <ul className="divide-y divide-border">
                 {ranked.map((route) => {
                   const isWinner = route.key === evaluation.recommended;
+                  const isFinal = route.key === winner?.key;
+                  const lead = (recommendedRoute?.netRecovery ?? 0) - route.netRecovery;
                   return (
                     <li
                       key={route.key}
                       className={cn(
                         "px-4 py-4 transition-colors sm:px-5",
-                        isWinner && "bg-success-soft/50",
+                        isFinal && "bg-success-soft/50",
                         !route.feasible && "opacity-70",
                       )}
                     >
                       <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-                        {isWinner && <span className="h-8 w-1 rounded-full bg-success" />}
+                        {isFinal && <span className="h-8 w-1 rounded-full bg-success" />}
                         <span className="text-[15px] font-semibold uppercase tracking-wide">
                           {route.label}
                         </span>
@@ -408,42 +439,43 @@ function DecisionScreen() {
                         ) : (
                           <Tag tone="danger">Not feasible</Tag>
                         )}
-                        {isWinner && <Tag tone="ink">Selected</Tag>}
-                        {route.key === "WRITE_OFF" && !isWinner && <Tag>Fallback</Tag>}
+                        {isWinner && <Tag tone="ink">Engine pick</Tag>}
+                        {isFinal && isOverridden && <Tag tone="warning">Final — override</Tag>}
+                        {route.key === "WRITE_OFF" && !isFinal && <Tag>Fallback</Tag>}
                         <span className="num ml-auto text-base font-semibold">
-                          {route.feasible ? formatINR(route.netRecovery) : "—"}
+                          {formatINR(route.netRecovery)}
                         </span>
                       </div>
 
+                      <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                        <Field label="Expected value" value={<span className="num">{formatINR(route.expectedValue)}</span>} />
+                        <Field label="Total cost" value={<span className="num">{formatINR(route.totalCost)}</span>} />
+                        <Field
+                          label="Net recovery"
+                          value={<span className="num">{formatINR(route.netRecovery)}</span>}
+                        />
+                        <Field
+                          label="Cost breakdown"
+                          value={
+                            <span className="num text-xs">
+                              P {route.costs.processing} · R {route.costs.refurbishment} · L{" "}
+                              {route.costs.logistics} · Risk {route.costs.risk}
+                            </span>
+                          }
+                        />
+                      </div>
+
                       {route.feasible ? (
-                        <>
-                          <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
-                            <Field label="Expected value" value={<span className="num">{formatINR(route.expectedValue)}</span>} />
-                            <Field label="Total cost" value={<span className="num">{formatINR(route.totalCost)}</span>} />
-                            <Field
-                              label="Net recovery"
-                              value={<span className="num">{formatINR(route.netRecovery)}</span>}
-                            />
-                            <Field
-                              label="Cost breakdown"
-                              value={
-                                <span className="num text-xs">
-                                  P {route.costs.processing} · R {route.costs.refurbishment} · L{" "}
-                                  {route.costs.logistics} · Risk {route.costs.risk}
-                                </span>
-                              }
-                            />
-                          </div>
-                          <p className="mt-2 text-xs text-muted-foreground">
-                            {isWinner ? "Won: " : "Lost: "}
-                            {isWinner
-                              ? route.drivers.join(", ")
-                              : `${formatINR((winner?.netRecovery ?? 0) - route.netRecovery)} behind ${winner?.label} — ${route.drivers.join(", ")}`}
-                          </p>
-                        </>
+                        <p className="mt-2 text-xs text-muted-foreground">
+                          {isWinner ? "Won: " : "Lost: "}
+                          {isWinner
+                            ? route.drivers.join(", ")
+                            : `${formatINR(lead)} behind ${recommendedRoute?.label} — ${route.drivers.join(", ")}`}
+                        </p>
                       ) : (
                         <p className="mt-2 text-xs text-muted-foreground">
-                          Blocked at feasibility gate: {route.blockedReason}
+                          Lost at the feasibility gate: {route.blockedReason} Economics above are
+                          indicative only — this route cannot be executed.
                         </p>
                       )}
                     </li>
