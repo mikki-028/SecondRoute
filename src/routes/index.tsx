@@ -84,13 +84,30 @@ function QueuePage() {
           </p>
         </div>
         <div className="grid grid-cols-3 gap-3 sm:gap-6">
-          <Metric label="In queue" value={String(rows.length)} />
-          <Metric label="Decisions logged" value={String(decided)} />
+          <Metric label="Active in queue" value={String(activeRows.length)} />
+          <Metric label="Finalized" value={String(finalizedRows.length)} />
           <Metric label="Recoverable value" value={formatINR(potential)} />
         </div>
       </div>
 
-      <Panel className="mt-7" dense>
+      <Panel
+        className="mt-7"
+        title="Active queue"
+        action={
+          <span className="text-xs text-muted-foreground">
+            {activeRows.length} awaiting a decision
+          </span>
+        }
+        dense
+      >
+        {activeRows.length === 0 ? (
+          <div className="px-6 py-14 text-center">
+            <p className="text-sm font-medium">Queue clear</p>
+            <p className="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">
+              Every return has a finalized decision. Finalized items are listed below.
+            </p>
+          </div>
+        ) : (
         <div className="overflow-x-auto">
           <table className="w-full min-w-[900px] border-collapse text-sm">
             <thead>
@@ -113,7 +130,7 @@ function QueuePage() {
               </tr>
             </thead>
             <tbody>
-              {rows.map(({ item, ctx, evaluation, decision }) => {
+              {activeRows.map(({ item, ctx, evaluation, decision }) => {
                 const win = evaluation.routes.find((x) => x.key === evaluation.recommended);
                 return (
                   <tr
