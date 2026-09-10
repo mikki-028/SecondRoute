@@ -98,6 +98,9 @@ function DecisionScreen() {
   const [overrideReason, setOverrideReason] = useState("");
   const [overrideError, setOverrideError] = useState<string | null>(null);
   const [saved, setSaved] = useState<{ route: RouteKey; overridden: boolean } | null>(null);
+  const [pendingOverride, setPendingOverride] = useState<{ route: RouteKey; reason: string } | null>(
+    null,
+  );
   const baseRef = useRef<ItemContext | null>(null);
 
   useEffect(() => {
@@ -107,6 +110,7 @@ function DecisionScreen() {
     setCtx(withSettings);
     setNotice(null);
     setSaved(null);
+    setPendingOverride(null);
   }, [seed]);
 
   const evaluation = useMemo(() => (ctx ? evaluateReturn(ctx) : null), [ctx]);
