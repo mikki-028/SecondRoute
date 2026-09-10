@@ -113,7 +113,11 @@ function QueuePage() {
               {rows.map(({ item, ctx, evaluation, decision }) => {
                 const win = evaluation.routes.find((x) => x.key === evaluation.recommended);
                 return (
-                  <tr key={item.returnId} className="group border-b border-border last:border-0">
+                  <tr
+                    key={item.returnId}
+                    onClick={() => navigate({ to: "/returns/$id", params: { id: item.returnId } })}
+                    className="group cursor-pointer border-b border-border last:border-0 transition-colors hover:bg-surface/70"
+                  >
                     <td className="px-4 py-3">
                       <Link
                         to="/returns/$id"
