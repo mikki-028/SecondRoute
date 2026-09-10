@@ -160,30 +160,46 @@ function DecisionScreen() {
     }
 
     setSaved(null);
+    // A recalculated evaluation invalidates any pending override selection.
+    setPendingOverride(null);
   };
 
-  const winner = evaluation.routes.find((r) => r.key === evaluation.recommended) ?? null;
+  const recommendedRoute = evaluation.routes.find((r) => r.key === evaluation.recommended) ?? null;
   const ranked = [...evaluation.routes].sort((a, b) => {
     if (a.feasible !== b.feasible) return a.feasible ? -1 : 1;
     return b.netRecovery - a.netRecovery;
   });
   const feasibleRoutes = evaluation.routes.filter((r) => r.feasible);
 
-  const accept = () => {
-    if (!winner) return;
+  /** Current decision = human override if one is in force, otherwise the engine pick. */
+  const winner = pendingOverride
+    ? (evaluation.routes.find((r) => r.key === pendingOverride.route) ?? recommendedRoute)
+    : recommendedRoute;
+  const isOverridden = Boolean(pendingOverride && winner?.key === pendingOverride.route);
+
+  const finalize = (route: RouteKey, overridden: boolean, reason: string) => {
     saveDecision({
       returnId: ctx.returnId,
       product: ctx.product,
       originalRecommendation: evaluation.recommended,
-      finalDecision: winner.key,
-      overridden: false,
-      reason: evaluation.explanation,
+      finalDecision: route,
+      overridden,
+      reason,
       confidence: evaluation.confidence,
-      expectedNetRecovery: winner.netRecovery,
+      expectedNetRecovery: netOf(evaluation, route),
       snapshot: evaluation.snapshot,
       routes: evaluation.routes,
     });
-    setSaved({ route: winner.key, overridden: false });
+    setSaved({ route, overridden });
+  };
+
+  const accept = () => {
+    if (!winner) return;
+    finalize(
+      winner.key,
+      isOverridden,
+      isOverridden ? pendingOverride!.reason : evaluation.explanation,
+    );
   };
 
   const submitOverride = () => {
@@ -191,19 +207,9 @@ function DecisionScreen() {
     if (overrideReason.trim().length < 10)
       return setOverrideError("Give a reason of at least 10 characters — overrides are audited.");
     setOverrideError(null);
-    saveDecision({
-      returnId: ctx.returnId,
-      product: ctx.product,
-      originalRecommendation: evaluation.recommended,
-      finalDecision: overrideRoute,
-      overridden: true,
-      reason: overrideReason.trim(),
-      confidence: evaluation.confidence,
-      expectedNetRecovery: netOf(evaluation, overrideRoute),
-      snapshot: evaluation.snapshot,
-      routes: evaluation.routes,
-    });
-    setSaved({ route: overrideRoute, overridden: true });
+    const reason = overrideReason.trim();
+    setPendingOverride({ route: overrideRoute, reason });
+    finalize(overrideRoute, true, reason);
     setOverrideOpen(false);
     setOverrideReason("");
     setOverrideRoute("");
