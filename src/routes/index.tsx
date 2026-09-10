@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { ArrowUpRight } from "lucide-react";
 
@@ -49,6 +49,7 @@ function useLiveState() {
 
 function QueuePage() {
   const { settings, decisions } = useLiveState();
+  const navigate = useNavigate();
 
   const rows = useMemo(
     () =>
