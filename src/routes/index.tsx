@@ -62,11 +62,13 @@ function QueuePage() {
     [settings, decisions],
   );
 
-  const decided = rows.filter((r) => r.decision).length;
-  const potential = rows.reduce((sum, r) => {
+  const activeRows = rows.filter((r) => !r.decision);
+  const finalizedRows = rows.filter((r) => r.decision);
+  const potential = activeRows.reduce((sum, r) => {
     const win = r.evaluation.routes.find((x) => x.key === r.evaluation.recommended);
     return sum + (win?.netRecovery ?? 0);
   }, 0);
+  const recovered = finalizedRows.reduce((sum, r) => sum + (r.decision?.expectedNetRecovery ?? 0), 0);
 
   return (
     <main className="mx-auto max-w-[1400px] px-4 py-8 sm:px-6">
