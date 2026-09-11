@@ -134,7 +134,7 @@ function RootComponent() {
           <div className="mx-auto flex max-w-[1400px] flex-col gap-3 px-4 py-3 sm:px-6 md:flex-row md:items-center md:justify-between">
             <Link to="/" className="flex items-center gap-2.5">
               <img
-                src={logoAsset.url}
+                src={logoUrl}
                 alt="SecondRoute logo"
                 className="h-7 w-7 rounded-md object-contain"
               />
