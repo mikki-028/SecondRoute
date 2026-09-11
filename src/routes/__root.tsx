@@ -10,6 +10,7 @@ import {
 import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
+import logoAsset from "../assets/secondroute-logo.png.asset.json";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 
 function NotFoundComponent() {
@@ -94,7 +95,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         rel: "stylesheet",
         href: "https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap",
       },
-      { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+      { rel: "icon", href: "/favicon.png", type: "image/png" },
     ],
   }),
   shellComponent: RootShell,
@@ -132,9 +133,12 @@ function RootComponent() {
         <header className="sticky top-0 z-30 border-b border-border bg-background/85 backdrop-blur">
           <div className="mx-auto flex max-w-[1400px] flex-col gap-3 px-4 py-3 sm:px-6 md:flex-row md:items-center md:justify-between">
             <Link to="/" className="flex items-center gap-2.5">
-              <span className="flex h-7 w-7 items-center justify-center rounded-md bg-primary text-[13px] font-bold text-primary-foreground">
-                S
-              </span>
+              <img
+                src={logoAsset.url}
+                alt="SecondRoute logo"
+                className="h-7 w-7 rounded-md object-contain"
+              />
+
               <span className="text-[15px] font-semibold tracking-tight">SecondRoute</span>
               <span className="hidden text-xs text-muted-foreground sm:inline">
                 Returns disposition engine
